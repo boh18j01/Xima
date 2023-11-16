@@ -1,0 +1,199 @@
+version: '3.7'
+services:
+  mongo:
+    container_name: mongo
+    image: mongo:4.4.14-rc0-focal
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo-data:/data/db
+    networks:
+      - shopping_network
+
+#  api-gateway-service:
+#    build: api-gateway-service
+#    container_name:  api-gateway-service
+#    image: whz/api-gateway-service:1.0.0.Snapshot
+#    environment:
+#      - DISCOVERY_URI=http://discovery-service:8761
+#      - NOTIFICATION_URI=http://notification-service:8085
+#      - ORDER_URI=http://order-service:8083
+#      - PAYMENT_URI=http://payment-service:8084
+#      - PRODUCT_URI=http://product-service:8082
+#      - SHOPPING_CART_URI=http://shopping-cart-service:8088
+#      - USER_URI=http://user-service:8089
+#      - KEY_CLOAK_JWT_URI=http://keycloak:8080/realms/prototype-realm
+#      - DEFAULT_ZONE_URI=http://eureka:password@discovery-service:8761/eureka/
+#    networks:
+#      - shopping_network
+#    depends_on:
+#      - discovery-service
+#      - keycloak
+#    ports:
+#      - "8000:8000"
+#    restart: always
+#  discovery-service:
+#    build: discovery-service
+#    container_name: discovery-service
+#    image: whz/discovery-service:1.0.0.Snapshot
+#    ports:
+#      - "8761:8761"
+#    networks:
+#      - shopping_network
+#
+#  notification-service:
+#    build: notification-service
+#    container_name: notification-service
+#    image: whz/notification-service:1.0.0.Snapshot
+#    depends_on:
+#      - discovery-service
+#      - api-gateway-service
+#    networks:
+#      - shopping_network
+#    restart: always
+#  order-service:
+#    build: order-service
+#    container_name: order-service
+#    image: whz/order-service:1.0.0.Snapshot
+#    depends_on:
+#      - discovery-service
+#      - mongo
+#      - api-gateway-service
+#    networks:
+#      - shopping_network
+#    environment:
+#      - DEFAULT_ZONE_URI=http://eureka:password@discovery-service:8761/eureka/
+#      - KAFKA_SERVER=http://kafka:29092
+#      - MONGO_DB_HOST=mongo
+#    restart: always
+#
+#  product-service:
+#    build: product-service
+#    container_name: product-service
+#    image: whz/product-service:1.0.0.Snapshot
+#    depends_on:
+#      - mongo
+#      - discovery-service
+#      - api-gateway-service
+#    networks:
+#      - shopping_network
+#    environment:
+#      - DEFAULT_ZONE_URI=http://eureka:password@discovery-service:8761/eureka/
+#      - KAFKA_SERVER=http://kafka:29092
+#      - MONGO_DB_HOST=mongo
+#    restart: always
+#  payment-service:
+#    build: payment-service
+#    container_name: payment-service
+#    image: whz/payment-service:1.0.0.Snapshot
+#    depends_on:
+#      - mongo
+#      - api-gateway-service
+#      - discovery-service
+#    networks:
+#      - shopping_network
+#    environment:
+#      - DEFAULT_ZONE_URI=http://eureka:password@discovery-service:8761/eureka/
+#      - KAFKA_SERVER=http://kafka:29092
+#      - MONGO_DB_HOST=mongo
+#
+#  user-service:
+#    build: user-service
+#    container_name: user-service
+#    image: whz/user-service:1.0.0.Snapshot
+#    depends_on:
+#      - mongo
+#      - api-gateway-service
+#      - discovery-service
+#    networks:
+#      - shopping_network
+#    environment:
+#      - DEFAULT_ZONE_URI=http://eureka:password@discovery-service:8761/eureka/
+#      - KAFKA_SERVER=http://kafka:29092
+#      - MONGO_DB_HOST=mongo
+#
+#  shopping-cart-service:
+#      build: shopping-cart-service
+#      container_name: shopping-cart-service
+#      image: whz/shopping-cart-service:1.0.0.Snapshot
+#      depends_on:
+#        - discovery-service
+#        - api-gateway-service
+#      networks:
+#        - shopping_network
+#      restart: always
+
+  frontend:
+    build: frontend
+    container_name: frontend
+    image: whz/frontend:1.0.0.Snapshot
+    ports:
+      - "80:80"
+    depends_on:
+      - keycloak
+    networks:
+      - shopping_network
+
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    ports:
+      - "2181:2181"
+    networks:
+      - shopping_network
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    depends_on:
+      - zookeeper
+    networks:
+      - shopping_network
+    ports:
+      - "9092:9092"
+    expose:
+      - "29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+      KAFKA_CREATE_TOPICS: ${KAFKA_TOPICS}
+
+  postgresql:
+    image: docker.io/bitnami/postgresql:latest
+    container_name: postgres
+    networks:
+      - shopping_network
+    environment:
+      - POSTGRESQL_USERNAME=bn_keycloak
+      - POSTGRESQL_PASSWORD=keycloak
+      - POSTGRESQL_DATABASE=bitnami_keycloak
+    volumes:
+      - './keycloak-db:/bitnami/postgresql'
+
+
+  keycloak:
+    image: docker.io/bitnami/keycloak:20.0.2
+    container_name: keycloak
+    networks:
+      - shopping_network
+    environment:
+      - KEYCLOAK_DATABASE_PASSWORD=keycloak
+      - KEYCLOAK_CREATE_ADMIN_USER=true
+      - KEYCLOAK_ADMIN_USER=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    ports:
+      - "8080:8080"
+    expose:
+      - 8118
+    depends_on:
+      - postgresql
+
+
+networks:
+   shopping_network:
+      name: shopping_network

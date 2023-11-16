@@ -1,0 +1,6 @@
+package com.ecommerce.core.models.Order;
+
+public enum OrderStatus {
+    NEW, HOLD, SHIPPED, DELIVERED, CLOSED, PAYMENT_CONFIRMED, PAYMENT_REJECTED, ROLLBACK, PAYMENT_PROCESS,
+    PRODUCT_NOT_AVAILABLE, RESERVED
+}

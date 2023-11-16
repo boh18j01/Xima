@@ -1,0 +1,16 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: shopping-cart-service
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: shipping-cart-service
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka:password@localhost:8761/eureka/

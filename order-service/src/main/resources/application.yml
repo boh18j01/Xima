@@ -1,0 +1,40 @@
+server:
+  port: 8083
+
+
+spring:
+  application:
+    name: order-service
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: order-service
+  kafka:
+    streams:
+      state-dir: /tmp/kafka-streams/1
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka:password@localhost:8761/eureka/
+spring.kafka:
+  bootstrap-servers: localhost:9092
+  producer:
+    key-serializer: org.apache.kafka.common.serialization.StringSerializer
+    value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  consumer:
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    properties:
+      spring.json.trusted.packages: "*"
+
+
+spring.output.ansi.enabled: ALWAYS
+
+logging.pattern.console: "%clr(%d{HH:mm:ss.SSS}){blue} %clr(---){faint} %clr([%15.15t]){yellow} %clr(:){red} %clr(%m){faint}%n"
+
+
+springdoc:
+  swagger-ui:
+    path: /docs
